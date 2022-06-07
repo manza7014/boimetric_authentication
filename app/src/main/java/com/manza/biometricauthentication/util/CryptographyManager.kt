@@ -25,6 +25,7 @@ import androidx.annotation.RequiresApi
 import com.google.gson.Gson
 import java.nio.charset.Charset
 import java.security.KeyStore
+import java.security.UnrecoverableEntryException
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
@@ -126,7 +127,11 @@ private class CryptographyManagerImpl : CryptographyManager {
         // If Secretkey was previously created for that keyName, then grab and return it.
         val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE)
         keyStore.load(null) // Keystore must be loaded before it can be accessed
-        keyStore.getKey(keyName, null)?.let { return it as SecretKey }
+        try {
+            keyStore.getKey(keyName, null)?.let { return it as SecretKey }
+        } catch (e: UnrecoverableEntryException) {
+            keyStore.deleteEntry(ANDROID_KEYSTORE)
+        }
 
         // if you reach here, then a new SecretKey must be generated for that keyName
         val paramsBuilder = KeyGenParameterSpec.Builder(
