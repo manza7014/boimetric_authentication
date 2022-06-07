@@ -15,33 +15,33 @@
         android:layout_marginTop="32dp"
         android:layout_marginEnd="16dp"
         android:ems="10"
-        android:hint="请输入密码"
+        android:hint="请输入待加密数据"
         android:inputType="textPersonName"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <Button
-        android:id="@+id/btn_biometric_save"
+        android:id="@+id/btn_biometric_encrypt"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="32dp"
-        android:text="biometric save"
+        android:text="biometric encrypt"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/editTextTextPersonName" />
 
     <Button
-        android:id="@+id/btn_biometric_get"
+        android:id="@+id/btn_biometric_decrypt"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
         android:layout_marginTop="100dp"
         android:layout_marginEnd="16dp"
-        android:text="biometric get"
+        android:text="biometric decrypt"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/btn_biometric_save" />
+        app:layout_constraintTop_toBottomOf="@+id/btn_biometric_encrypt" />
 
     <TextView
         android:id="@+id/textView"
@@ -54,6 +54,17 @@
         android:textColor="#222"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/btn_biometric_get" />
+        app:layout_constraintTop_toBottomOf="@+id/btn_biometric_decrypt" />
+
+    <Button
+        android:id="@+id/btn_clear"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="clear"
+        app:layout_constraintBottom_toTopOf="@+id/btn_biometric_decrypt"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.498"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/btn_biometric_encrypt" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
