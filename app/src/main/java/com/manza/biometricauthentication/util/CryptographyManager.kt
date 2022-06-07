@@ -19,6 +19,7 @@ package com.manza.biometricauthentication.util
 import android.content.Context
 import android.os.Build
 import android.security.keystore.KeyGenParameterSpec
+import android.security.keystore.KeyPermanentlyInvalidatedException
 import android.security.keystore.KeyProperties
 import androidx.annotation.RequiresApi
 import com.google.gson.Gson
@@ -28,6 +29,7 @@ import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
+
 
 /**
  * Handles encryption and decryption
@@ -64,6 +66,7 @@ interface CryptographyManager {
     ): CiphertextWrapper?
 
 }
+
 @RequiresApi(Build.VERSION_CODES.M)
 fun CryptographyManager(): CryptographyManager = CryptographyManagerImpl()
 
@@ -83,7 +86,14 @@ private class CryptographyManagerImpl : CryptographyManager {
     override fun getInitializedCipherForEncryption(keyName: String): Cipher {
         val cipher = getCipher()
         val secretKey = getOrCreateSecretKey(keyName)
-        cipher.init(Cipher.ENCRYPT_MODE, secretKey)
+        try {
+            cipher.init(Cipher.ENCRYPT_MODE, secretKey)
+        } catch (e: KeyPermanentlyInvalidatedException) {
+            val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE)
+            keyStore.deleteEntry(ANDROID_KEYSTORE)
+            val newSecretKey = getOrCreateSecretKey(keyName)
+            cipher.init(Cipher.ENCRYPT_MODE, newSecretKey)
+        }
         return cipher
     }
 
@@ -113,7 +123,6 @@ private class CryptographyManagerImpl : CryptographyManager {
     }
 
     private fun getOrCreateSecretKey(keyName: String): SecretKey {
-        // manza: 7/6/2022 keyPermanentlyInvalidate Exception
         // If Secretkey was previously created for that keyName, then grab and return it.
         val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE)
         keyStore.load(null) // Keystore must be loaded before it can be accessed
