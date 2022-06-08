@@ -83,6 +83,7 @@ private class CryptographyManagerImpl : CryptographyManager {
     private val ENCRYPTION_BLOCK_MODE = KeyProperties.BLOCK_MODE_GCM
     private val ENCRYPTION_PADDING = KeyProperties.ENCRYPTION_PADDING_NONE
     private val ENCRYPTION_ALGORITHM = KeyProperties.KEY_ALGORITHM_AES
+    private var keyStore: KeyStore? = null
 
     override fun getInitializedCipherForEncryption(keyName: String): Cipher {
         val cipher = getCipher()
@@ -90,8 +91,8 @@ private class CryptographyManagerImpl : CryptographyManager {
         try {
             cipher.init(Cipher.ENCRYPT_MODE, secretKey)
         } catch (e: KeyPermanentlyInvalidatedException) {
-            val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE)
-            keyStore.deleteEntry(ANDROID_KEYSTORE)
+            val keyStore = getKeyStore()
+            keyStore?.deleteEntry(keyName)
             val newSecretKey = getOrCreateSecretKey(keyName)
             cipher.init(Cipher.ENCRYPT_MODE, newSecretKey)
         }
@@ -104,7 +105,14 @@ private class CryptographyManagerImpl : CryptographyManager {
     ): Cipher {
         val cipher = getCipher()
         val secretKey = getOrCreateSecretKey(keyName)
-        cipher.init(Cipher.DECRYPT_MODE, secretKey, GCMParameterSpec(128, initializationVector))
+        try {
+            cipher.init(Cipher.DECRYPT_MODE, secretKey, GCMParameterSpec(128, initializationVector))
+        } catch (e: KeyPermanentlyInvalidatedException) {
+            val keyStore = getKeyStore()
+            keyStore?.deleteEntry(keyName)
+            val newSecretKey = getOrCreateSecretKey(keyName)
+            cipher.init(Cipher.DECRYPT_MODE, newSecretKey, GCMParameterSpec(128, initializationVector))
+        }
         return cipher
     }
 
@@ -125,12 +133,11 @@ private class CryptographyManagerImpl : CryptographyManager {
 
     private fun getOrCreateSecretKey(keyName: String): SecretKey {
         // If Secretkey was previously created for that keyName, then grab and return it.
-        val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE)
-        keyStore.load(null) // Keystore must be loaded before it can be accessed
+        val keyStore = getKeyStore()
         try {
-            keyStore.getKey(keyName, null)?.let { return it as SecretKey }
+            keyStore?.getKey(keyName, null)?.let { return it as SecretKey }
         } catch (e: UnrecoverableEntryException) {
-            keyStore.deleteEntry(ANDROID_KEYSTORE)
+            keyStore?.deleteEntry(keyName)
         }
 
         // if you reach here, then a new SecretKey must be generated for that keyName
@@ -152,6 +159,13 @@ private class CryptographyManagerImpl : CryptographyManager {
         )
         keyGenerator.init(keyGenParams)
         return keyGenerator.generateKey()
+    }
+
+    private fun getKeyStore(): KeyStore? {
+        if (keyStore != null) return keyStore
+        keyStore = KeyStore.getInstance(ANDROID_KEYSTORE)
+        keyStore?.load(null)
+        return keyStore
     }
 
     override fun persistCiphertextWrapperToSharedPrefs(
